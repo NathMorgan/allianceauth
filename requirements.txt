@@ -27,3 +27,5 @@ git+git://github.com/nikdoof/python-ts3.git
 git+https://github.com/adarnof/openfire-restapi
 
 git+https://github.com/adarnof/adarnauth-esi
+
+git+https://github.com/praekelt/django-recaptcha
