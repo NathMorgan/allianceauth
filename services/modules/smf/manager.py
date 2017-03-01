@@ -25,6 +25,8 @@ class SmfManager:
 
     SQL_DIS_USER = r"UPDATE smf_members SET email_address = %s, passwd = %s WHERE member_name = %s"
 
+    SQL_UPDATE_USER = r"UPDATE smf_members SET email_address = %s, passwd = %s, real_name = %s WHERE member_name = %s"
+
     SQL_USER_ID_FROM_USERNAME = r"SELECT id_member from smf_members WHERE member_name = %s"
 
     SQL_ADD_USER_GROUP = r"UPDATE smf_members SET additional_groups = %s WHERE id_member = %s"
@@ -67,6 +69,10 @@ class SmfManager:
         d = datetime.utcnow()
         unixtime = calendar.timegm(d.utctimetuple())
         return unixtime
+
+    @staticmethod
+    def format_corp_ticker(corp_ticker):
+        return "[%s] " % corp_ticker
 
     @classmethod
     def create_group(cls, groupname):
@@ -140,11 +146,12 @@ class SmfManager:
         return out
 
     @classmethod
-    def add_user(cls, username, email_address, groups, characterid):
+    def add_user(cls, username, email_address, groups, characterid, corp_ticker):
         logger.debug("Adding smf user with member_name %s, email_address %s, characterid %s" % (
             username, email_address, characterid))
         cursor = connections['smf'].cursor()
         username_clean = cls.santatize_username(username)
+        corp_ticker_formatted = cls.format_corp_ticker(corp_ticker)
         passwd = cls.generate_random_pass()
         pwhash = cls.gen_hash(username_clean, passwd)
         logger.debug("Proceeding to add smf user %s and pwhash starting with %s" % (username, pwhash[0:5]))
@@ -152,11 +159,11 @@ class SmfManager:
         # check if the username was simply revoked
         if cls.check_user(username) is True:
             logger.warn("Unable to add smf user with username %s - already exists. Updating user instead." % username)
-            cls.__update_user_info(username_clean, email_address, pwhash)
+            cls.__update_user_info(username_clean, email_address, pwhash, corp_ticker_formatted)
         else:
             try:
                 cursor.execute(cls.SQL_ADD_USER,
-                               [username_clean, passwd, email_address, register_date, username_clean])
+                               [username_clean, passwd, email_address, register_date, corp_ticker + username_clean])
                 cls.add_avatar(username_clean, characterid)
                 logger.info("Added smf member_name %s" % username_clean)
                 cls.update_groups(username_clean, groups)
@@ -166,12 +173,12 @@ class SmfManager:
         return username_clean, passwd
 
     @classmethod
-    def __update_user_info(cls, username, email_address, passwd):
+    def __update_user_info(cls, username, email_address, passwd, corp_ticker):
         logger.debug(
-            "Updating smf user %s info: username %s password of length %s" % (username, email_address, len(passwd)))
+            "Updating smf user %s info: username %s corp ticker %s password of length %s" % (username, email_address, corp_ticker, len(passwd)))
         cursor = connections['smf'].cursor()
         try:
-            cursor.execute(cls.SQL_DIS_USER, [email_address, passwd, username])
+            cursor.execute(cls.SQL_UPDATE_USER, [email_address, passwd, corp_ticker + username, username])
             logger.info("Updated smf user %s info" % username)
         except:
             logger.exception("Unable to update smf user %s info." % username)
