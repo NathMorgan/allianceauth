@@ -103,9 +103,10 @@ class DiscordTasks:
         logger.debug("Updating discord nickname for user %s" % user)
         if DiscordTasks.has_account(user):
             character = EveManager.get_main_character(user)
-            logger.debug("Updating user %s discord nickname to %s" % (user, character.character_name))
+            character_name = "[%s] %s" % (character.corporation_ticker, character.character_name)
+            logger.debug("Updating user %s discord nickname to %s" % (user, character_name))
             try:
-                DiscordOAuthManager.update_nickname(user.discord.uid, character.character_name)
+                DiscordOAuthManager.update_nickname(user.discord.uid, character_name)
             except Exception as e:
                 if self:
                     logger.exception("Discord nickname sync failed for %s, retrying in 10 mins" % user)
