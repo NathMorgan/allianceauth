@@ -5,8 +5,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import render, redirect
 
 from eveonline.managers import EveManager
-from services.forms import ServicePasswordForm
-
+from services.forms import ServicePasswordForm, ServiceSMFtoAAForm
 from .manager import SmfManager
 from .tasks import SmfTasks
 from .models import SmfUser
@@ -110,3 +109,34 @@ def set_smf_password(request):
     logger.debug("Rendering form for user %s" % request.user)
     context = {'form': form, 'service': 'SMF'}
     return render(request, 'registered/service_password.html', context=context)
+
+
+@login_required
+@permission_required(ACCESS_PERM)
+def link_smf_to_aa(request):
+    logger.debug("link_smf_to_aa called by user %s" % request.user)
+    if request.method == 'POST':
+        logger.debug("Received POST request with form.")
+        form = ServiceSMFtoAAForm(request.POST)
+        logger.debug("Form is valid: %s" % form.is_valid())
+        character = EveManager.get_main_character(request.user)
+        if form.is_valid() and character is not None:
+            key = form.cleaned_data['key']
+            result = SmfManager.get_user_by_key(key)
+            if result != "":
+                logger.info("Successfully linked SMF to AA for user %s" % request.user)
+                SmfUser.objects.update_or_create(user=request.user, defaults={'username': result})
+                logger.debug("Updated authserviceinfo for user %s with smf key. Updating groups." % request.user)
+                SmfTasks.update_groups.delay(request.user.pk)
+                messages.success(request, 'Linked SMF to AA.')
+            else:
+                logger.error("Failed to link SMF to AA for user %s" % request.user)
+                messages.error(request, 'Failed to link SMF to AA. Please contact the server admin.')
+            return redirect("auth_services")
+    else:
+        logger.debug("Request is not type POST - providing empty form.")
+        form = ServiceSMFtoAAForm()
+
+    logger.debug("Rendering form for user %s" % request.user)
+    context = {'form': form, 'service': 'SMF'}
+    return render(request, 'registered/link_smf_to_aa.html', context=context)

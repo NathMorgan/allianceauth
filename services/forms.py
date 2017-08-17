@@ -29,3 +29,6 @@ class ServicePasswordForm(forms.Form):
         if not len(password) >= 8:
             raise forms.ValidationError(_("Password must be at least 8 characters long."))
         return password
+
+class ServiceSMFtoAAForm(forms.Form):
+    key = forms.CharField(label=_("Key: "), required=True)

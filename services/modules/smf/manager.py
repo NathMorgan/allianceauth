@@ -43,6 +43,8 @@ class SmfManager:
 
     SQL_ADD_USER_AVATAR = r"UPDATE smf_members SET avatar = %s WHERE id_member = %s"
 
+    SQL_GET_KEY = r"SELECT member_name FROM smf_members WHERE aa_key = %s"
+
     @staticmethod
     def _sanitize_groupname(name):
         name = name.strip(' _')
@@ -265,3 +267,17 @@ class SmfManager:
             return password
         logger.error("Unable to update smf user %s password - user not found on smf." % username)
         return ""
+
+    @classmethod
+    def get_user_by_key(cls, key):
+        logger.debug("Getting smf user key")
+        cursor = connections['smf'].cursor()
+        cursor.execute(cls.SQL_GET_KEY, [key])
+        row = cursor.fetchone()
+        if row is not None:
+            logger.debug("Got smf user key username %s" % (row[0]))
+            return row[0]
+        else:
+            logger.error("key not found on smf.")
+            return ""
+

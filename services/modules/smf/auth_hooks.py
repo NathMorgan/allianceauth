@@ -49,7 +49,7 @@ class SmfService(ServicesHook):
 
     def render_services_ctrl(self, request):
         urls = self.Urls()
-        urls.auth_activate = 'auth_activate_smf'
+        urls.auth_activate = 'auth_link_smf_to_aa'
         urls.auth_deactivate = 'auth_deactivate_smf'
         urls.auth_reset_password = 'auth_reset_smf_password'
         urls.auth_set_password = 'auth_set_smf_password'

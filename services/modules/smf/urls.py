@@ -9,6 +9,7 @@ module_urls = [
     url(r'^deactivate/$', views.deactivate_smf, name='auth_deactivate_smf'),
     url(r'^reset_password/$', views.reset_smf_password, name='auth_reset_smf_password'),
     url(r'^set_password/$', views.set_smf_password, name='auth_set_smf_password'),
+    url(r'^link_accounts/$', views.link_smf_to_aa, name='auth_link_smf_to_aa')
 ]
 
 urlpatterns = [
